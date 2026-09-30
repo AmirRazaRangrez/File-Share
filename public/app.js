@@ -220,7 +220,11 @@
 
         case 'peer-joined':
           isInitiator = data.initiator;
-          waitingStatusText.textContent = 'Recipient connected. Negotiating direct pipe...';
+          if (isInitiator) {
+            if (waitingStatusText) waitingStatusText.textContent = 'Recipient connected. Negotiating direct pipe...';
+          } else {
+            joinRoomBtn.textContent = 'Sender connected. Negotiating P2P...';
+          }
           setStatus('busy', 'Connecting');
           setupPeerConnection();
           if (isInitiator) {
@@ -357,6 +361,12 @@
 
     dataChannel.onopen = () => {
       setStatus('ready', 'P2P Pipe Active');
+      if (waitingStatusText) {
+        waitingStatusText.textContent = 'Direct P2P pipe open! Sending file details...';
+      }
+      if (!isInitiator && joinRoomBtn) {
+        joinRoomBtn.textContent = 'P2P Pipe open! Receiving details...';
+      }
       if (isInitiator && currentFile) {
         // Send file metadata to receiver
         dataChannel.send(JSON.stringify({

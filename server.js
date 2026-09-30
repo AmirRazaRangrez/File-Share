@@ -21,6 +21,13 @@ const MIME_TYPES = {
 // Simple static file server
 const server = http.createServer((req, res) => {
   let reqUrl = req.url.split('?')[0];
+
+  // Quietly handle browser favicon requests without 404 error
+  if (reqUrl === '/favicon.ico') {
+    res.writeHead(204);
+    return res.end();
+  }
+
   if (reqUrl === '/') reqUrl = '/index.html';
   if (reqUrl === '/terms' || reqUrl === '/tc') reqUrl = '/tc.html';
 
@@ -42,9 +49,12 @@ const server = http.createServer((req, res) => {
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
+    // Prevent cloud proxies and browsers from caching app logic
     res.writeHead(200, {
       'Content-Type': contentType,
-      'Cache-Control': 'no-cache'
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     });
     fs.createReadStream(filePath).pipe(res);
   });
