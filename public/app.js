@@ -110,6 +110,41 @@
     statusLabel.textContent = label;
   }
 
+  // Keepalive & Reconnect
+  let pingInterval = null;
+  let reconnectTimer = null;
+
+  function startPing() {
+    stopPing();
+    pingInterval = setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 20000); // Send ping every 20 seconds to keep Render proxy alive
+  }
+
+  function stopPing() {
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = null;
+    }
+  }
+
+  function scheduleReconnect() {
+    if (reconnectTimer) return;
+    setStatus('reconnecting', 'Reconnecting...');
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      initWebSocket().then(() => {
+        if (currentRoomId && !peerConnection) {
+          sendSignaling({ type: 'join', roomId: currentRoomId });
+        }
+      }).catch(() => {
+        scheduleReconnect();
+      });
+    }, 2500);
+  }
+
   // Initialize WebSocket Signaling
   function initWebSocket() {
     return new Promise((resolve, reject) => {
@@ -123,17 +158,24 @@
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        setStatus('ready', 'Online');
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+        }
+        startPing();
+        setStatus('ready', currentRoomId ? 'Room Active' : 'Online');
         resolve(ws);
       };
 
       ws.onerror = (err) => {
-        setStatus('', 'Disconnected');
+        stopPing();
+        scheduleReconnect();
         reject(err);
       };
 
       ws.onclose = () => {
-        setStatus('', 'Offline');
+        stopPing();
+        scheduleReconnect();
       };
 
       ws.onmessage = handleSignalingMessage;

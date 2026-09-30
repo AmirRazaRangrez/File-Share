@@ -112,6 +112,10 @@ body.light-theme {
   background-color: #eab308;
 }
 
+.status-indicator.reconnecting .status-dot {
+  background-color: #f59e0b;
+}
+
 .nav-link {
   color: var(--text-secondary);
   text-decoration: none;

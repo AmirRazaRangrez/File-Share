@@ -54,12 +54,39 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server });
 const rooms = new Map(); // roomId -> Set of ws clients
 
+// 25-second heartbeat to prevent cloud proxies (Render/Cloudflare) from dropping idle connections
+function heartbeat() {
+  this.isAlive = true;
+}
+
+const heartbeatInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 25000);
+
+wss.on('close', () => {
+  clearInterval(heartbeatInterval);
+});
+
 wss.on('connection', (ws) => {
+  ws.isAlive = true;
+  ws.on('pong', heartbeat);
+
   let currentRoom = null;
 
   ws.on('message', (rawMessage) => {
     try {
       const data = JSON.parse(rawMessage);
+
+      // Handle ping keepalive from client
+      if (data.type === 'ping') {
+        ws.isAlive = true;
+        ws.send(JSON.stringify({ type: 'pong' }));
+        return;
+      }
 
       if (data.type === 'join') {
         const { roomId } = data;
