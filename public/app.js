@@ -9,11 +9,31 @@
   // Configuration
   const CHUNK_SIZE = 64 * 1024; // 64 KB SCTP-optimized chunk
   const BUFFER_THRESHOLD = 1024 * 1024; // 1 MB high-water mark for backpressure
+
+  // Robust STUN + Free OpenRelay TURN servers for cellular NAT traversal
   const RTC_CONFIG = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:openrelay.metered.ca:80' },
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
+    ],
+    iceCandidatePoolSize: 10
   };
 
   // State
@@ -22,6 +42,7 @@
   let dataChannel = null;
   let currentRoomId = null;
   let isInitiator = false;
+  let iceCandidatesQueue = [];
 
   let currentFile = null;
   let incomingFileMeta = null;
@@ -213,6 +234,7 @@
         case 'offer':
           if (!peerConnection) setupPeerConnection();
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+          await flushIceCandidatesQueue();
           const answer = await peerConnection.createAnswer();
           await peerConnection.setLocalDescription(answer);
           sendSignaling({ type: 'answer', answer });
@@ -220,16 +242,11 @@
 
         case 'answer':
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+          await flushIceCandidatesQueue();
           break;
 
         case 'candidate':
-          if (peerConnection && data.candidate) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-            } catch (e) {
-              console.error('Error adding ICE candidate', e);
-            }
-          }
+          await addIceCandidateSafely(data.candidate);
           break;
 
         case 'peer-disconnected':
@@ -238,6 +255,32 @@
       }
     } catch (err) {
       console.error('Error handling signaling message:', err);
+    }
+  }
+
+  // Safe ICE Candidate Queuing (prevents race condition when candidates arrive before remoteDescription)
+  async function addIceCandidateSafely(candidate) {
+    if (!candidate) return;
+    if (peerConnection && peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn('Non-fatal ICE candidate warning:', e.message);
+      }
+    } else {
+      iceCandidatesQueue.push(candidate);
+    }
+  }
+
+  async function flushIceCandidatesQueue() {
+    if (!peerConnection || !peerConnection.remoteDescription) return;
+    while (iceCandidatesQueue.length > 0) {
+      const candidate = iceCandidatesQueue.shift();
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn('Non-fatal queued ICE candidate warning:', e.message);
+      }
     }
   }
 
@@ -260,10 +303,36 @@
     };
 
     peerConnection.onconnectionstatechange = () => {
-      if (peerConnection.connectionState === 'connected') {
+      const state = peerConnection.connectionState;
+      console.log('WebRTC connection state:', state);
+
+      if (state === 'connected') {
         setStatus('ready', 'Direct P2P Connected');
-      } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
-        setStatus('', 'Disconnected');
+      } else if (state === 'connecting') {
+        setStatus('busy', 'Negotiating P2P Pipe...');
+      } else if (state === 'failed') {
+        // Attempt ICE restart if initiator before giving up
+        if (isInitiator) {
+          console.log('Attempting ICE restart...');
+          peerConnection.createOffer({ iceRestart: true }).then(offer => {
+            peerConnection.setLocalDescription(offer);
+            sendSignaling({ type: 'offer', offer });
+          }).catch(() => {
+            setStatus('', 'Connection Failed');
+          });
+        } else {
+          setStatus('', 'Connection Failed');
+        }
+      } else if (state === 'disconnected') {
+        setStatus('reconnecting', 'Reconnecting P2P...');
+      }
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+      const iceState = peerConnection.iceConnectionState;
+      console.log('ICE connection state:', iceState);
+      if (iceState === 'connected' || iceState === 'completed') {
+        setStatus('ready', 'Direct P2P Connected');
       }
     };
 

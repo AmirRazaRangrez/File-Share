@@ -98,7 +98,14 @@ wss.on('connection', (ws) => {
 
         const room = rooms.get(roomId);
 
-        if (room.size >= 2) {
+        // Prune any stale or closed sockets from the room
+        for (const client of room) {
+          if (client.readyState !== 1) { // 1 === WebSocket.OPEN
+            room.delete(client);
+          }
+        }
+
+        if (room.size >= 2 && !room.has(ws)) {
           ws.send(JSON.stringify({ type: 'room-full' }));
           return;
         }
