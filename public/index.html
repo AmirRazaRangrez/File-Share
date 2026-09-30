@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P File Transfer - Direct Device to Device</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+  <!-- Minimalist Top Navigation -->
+  <header class="site-header">
+    <div class="header-inner container">
+      <a href="/" class="brand">
+        <svg class="brand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+          <polyline points="16 6 12 2 8 6"/>
+          <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        <span class="brand-name">P2P File Transfer</span>
+      </a>
+
+      <div class="header-right">
+        <div id="connectionStatus" class="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text" id="statusLabel">Ready</span>
+        </div>
+        <a href="/tc" class="nav-link">Terms & Conditions</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="container main-content">
+    <div class="hero-block">
+      <h1 class="hero-title">Direct Device to Device File Transfer</h1>
+      <p class="hero-desc">
+        Send large files directly between your laptop and mobile device over WebRTC.
+        No intermediate cloud storage. No file size restrictions.
+      </p>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="mode-tabs">
+      <button type="button" class="tab-btn active" id="tabSendBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+        Send Files
+      </button>
+      <button type="button" class="tab-btn" id="tabReceiveBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M19 12l-7 7-7-7"/>
+        </svg>
+        Receive Files
+      </button>
+    </div>
+
+    <!-- SEND PANEL -->
+    <section id="sendPanel" class="app-card">
+      <!-- Step 1: File Selection -->
+      <div id="fileSelectionView" class="view-step">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" class="file-input-hidden">
+          <div class="dropzone-inner">
+            <div class="dropzone-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="dropzone-primary-text">Drag and drop any file here, or click to browse</p>
+            <p class="dropzone-secondary-text">Supports files of 4 GB, 5 GB, 20 GB or higher without cloud limits</p>
+            <button type="button" class="btn btn-secondary" id="browseBtn">Select File from Device</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Share & Pairing View -->
+      <div id="sharePairingView" class="view-step hidden">
+        <div class="file-summary-card">
+          <div class="file-icon-box">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="file-meta">
+            <div class="file-name" id="selectedFileName">filename.ext</div>
+            <div class="file-size" id="selectedFileSize">0 MB</div>
+          </div>
+          <button type="button" class="btn btn-subtle" id="changeFileBtn" title="Choose different file">
+            Change
+          </button>
+        </div>
+
+        <div class="pairing-container">
+          <div class="pairing-left">
+            <label class="pairing-label">Scan with Mobile Camera</label>
+            <div id="qrcodeBox" class="qr-wrapper"></div>
+            <span class="qr-help">Open phone camera or QR scanner to connect instantly</span>
+          </div>
+
+          <div class="pairing-divider">
+            <span class="divider-text">OR</span>
+          </div>
+
+          <div class="pairing-right">
+            <label class="pairing-label">Enter 6-Digit Code on Other Device</label>
+            <div class="code-display">
+              <span id="roomCodeDisplay" class="room-digits">------</span>
+              <button type="button" class="btn btn-subtle" id="copyCodeBtn" title="Copy code">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+
+            <label class="pairing-label" style="margin-top: 16px;">Direct Link</label>
+            <div class="link-input-group">
+              <input type="text" id="shareLinkInput" readonly class="text-input" value="">
+              <button type="button" class="btn btn-primary" id="copyLinkBtn">Copy Link</button>
+            </div>
+
+            <div class="waiting-indicator">
+              <div class="spinner-small"></div>
+              <span id="waitingStatusText">Waiting for receiver to open link...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECEIVE PANEL -->
+    <section id="receivePanel" class="app-card hidden">
+      <div class="receive-form">
+        <label class="input-label" for="joinRoomInput">Enter 6-Digit Transfer Code</label>
+        <p class="input-help">The sender device will display a 6-digit number or a QR code.</p>
+        <div class="join-controls">
+          <input type="text" id="joinRoomInput" class="text-input code-input" placeholder="e.g. 842910" maxlength="6" pattern="[0-9]*" inputmode="numeric">
+          <button type="button" class="btn btn-primary" id="joinRoomBtn">Connect to Sender</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVE TRANSFER / PROGRESS PANEL -->
+    <section id="transferPanel" class="app-card hidden">
+      <div class="transfer-header">
+        <div class="transfer-info">
+          <h2 class="transfer-title" id="transferTitle">Transferring File</h2>
+          <p class="transfer-filename" id="transferFileName">video.mp4</p>
+        </div>
+        <div class="transfer-badge" id="transferBadge">Direct P2P</div>
+      </div>
+
+      <!-- Accept prompt for Receiver -->
+      <div id="receiverPrompt" class="transfer-prompt hidden">
+        <p class="prompt-text">Sender wants to transfer <strong id="promptFileSize">0 MB</strong> directly to your device.</p>
+        <div class="prompt-actions">
+          <button type="button" class="btn btn-primary" id="acceptTransferBtn">Accept and Download</button>
+          <button type="button" class="btn btn-secondary" id="rejectTransferBtn">Decline</button>
+        </div>
+      </div>
+
+      <!-- Live Progress View -->
+      <div id="transferProgressView" class="transfer-body">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-item">
+            <span class="metric-label">Progress</span>
+            <span class="metric-value" id="percentMetric">0%</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Transferred</span>
+            <span class="metric-value" id="transferredMetric">0 MB / 0 MB</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Speed</span>
+            <span class="metric-value" id="speedMetric">0.0 MB/s</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Time Remaining</span>
+            <span class="metric-value" id="timeMetric">Calculating...</span>
+          </div>
+        </div>
+
+        <div class="transfer-actions">
+          <button type="button" class="btn btn-secondary" id="cancelTransferBtn">Cancel Transfer</button>
+        </div>
+      </div>
+
+      <!-- Completion View -->
+      <div id="transferCompleteView" class="transfer-complete hidden">
+        <div class="complete-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h3 class="complete-title">Transfer Complete</h3>
+        <p class="complete-desc" id="completeDesc">The file was successfully received directly on your device.</p>
+        <div class="complete-actions">
+          <a id="downloadFileBtn" class="btn btn-primary hidden" download>Download File</a>
+          <button type="button" class="btn btn-secondary" id="newTransferBtn">Transfer Another File</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Specifications Card (Truthful and direct) -->
+    <section class="info-section">
+      <div class="info-grid">
+        <div class="info-card">
+          <h3 class="info-heading">Direct Browser-to-Browser</h3>
+          <p class="info-text">
+            Files stream straight from device to device through WebRTC DataChannels. The signaling server never reads or stores your files.
+          </p>
+        </div>
+        <div class="info-card">
+          <h3 class="info-heading">Streaming Memory Architecture</h3>
+          <p class="info-text">
+            Files are transferred in 64 KB slices with backpressure control. This prevents mobile memory exhaustion when handling 5 GB to 50 GB transfers.
+          </p>
+        </div>
+        <div class="info-card">
+          <h3 class="info-heading">End-to-End Encrypted</h3>
+          <p class="info-text">
+            Data packets are encrypted using DTLS and SCTP standard protocols. Both devices must stay online until transfer completion.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-copy">Direct peer-to-peer file transfer. No files are stored on any server.</p>
+      <div class="footer-links">
+        <a href="/tc" class="footer-link">Terms & Conditions</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- QR Code Library & Main Script -->
+  <script src="qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

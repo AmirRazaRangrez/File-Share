@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms & Conditions - P2P File Transfer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-theme">
+  <header class="site-header">
+    <div class="header-inner container">
+      <a href="/" class="brand">
+        <svg class="brand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+          <polyline points="16 6 12 2 8 6"/>
+          <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        <span class="brand-name">P2P File Transfer</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Transfer</a>
+        <a href="/tc" class="nav-link active">Terms</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container document-page">
+    <div class="document-card">
+      <div class="document-header">
+        <h1 class="document-title">Terms & Conditions</h1>
+        <p class="document-subtitle">Last updated: September 30, 2026</p>
+      </div>
+
+      <div class="document-content">
+        <section class="doc-section">
+          <h2>1. Overview of Service</h2>
+          <p>
+            This application provides direct, browser-to-browser peer-to-peer (P2P) file transfer using WebRTC data channels.
+            Files transferred through this service travel directly between the sender and receiver devices.
+            At no point are your files uploaded to, stored on, processed by, or cached on our servers.
+          </p>
+        </section>
+
+        <section class="doc-section">
+          <h2>2. Architecture and Data Privacy</h2>
+          <p>
+            <strong>Signaling:</strong> Our server acts solely as a temporary signaling coordinator to establish the initial connection between two browsers. Only metadata required for the network handshake (such as session connection descriptions and network candidate addresses) is relayed.
+          </p>
+          <p>
+            <strong>Zero Storage:</strong> No file content, file names, or user data are saved to disk or persistent storage on any server. Once the peer connection is established, the signaling server does not intercept the file stream.
+          </p>
+          <p>
+            <strong>End-to-End Encryption:</strong> All transfers via WebRTC are encrypted in transit by default using DTLS (Datagram Transport Layer Security) and SCTP protocols.
+          </p>
+        </section>
+
+        <section class="doc-section">
+          <h2>3. Permitted Use and User Responsibilities</h2>
+          <p>
+            By using this service, you agree that you are solely responsible for all files you transfer. You must not use this service to transmit:
+          </p>
+          <ul>
+            <li>Material that infringes upon copyright, trademarks, patents, or trade secrets of third parties.</li>
+            <li>Malicious software, viruses, ransomware, or executable files intended to damage recipient devices.</li>
+            <li>Illegal, abusive, fraudulent, or harmful content under applicable local and international laws.</li>
+          </ul>
+        </section>
+
+        <section class="doc-section">
+          <h2>4. No Warranty and Limitation of Liability</h2>
+          <p>
+            This service is provided on an "as is" and "as available" basis without warranties of any kind, whether express or implied.
+            Because transfers occur directly over public internet infrastructure and peer devices, we do not guarantee uninterrupted availability, transfer speed, or completion.
+          </p>
+          <p>
+            In no event shall the authors or operators be held liable for any damages, data corruption, loss of files, or network interruptions arising from the use of this software.
+          </p>
+        </section>
+
+        <section class="doc-section">
+          <h2>5. Network Bandwidth and Device Requirements</h2>
+          <p>
+            Transferring large files (such as 5 GB or higher) consumes local device resources and network bandwidth. Both the sending and receiving devices must remain online and keep the browser window open until the transfer finishes.
+          </p>
+        </section>
+
+        <section class="doc-section">
+          <h2>6. Amendments to Terms</h2>
+          <p>
+            These terms may be updated from time to time to reflect functional changes or regulatory requirements. Continued use of the service constitutes acceptance of the revised terms.
+          </p>
+        </section>
+
+        <div class="document-action">
+          <a href="/" class="btn btn-primary">Back to Transfer</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-copy">Direct peer-to-peer file transfer. No files are stored on any server.</p>
+      <div class="footer-links">
+        <a href="/tc" class="footer-link">Terms & Conditions</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

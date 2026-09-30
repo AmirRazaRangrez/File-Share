@@ -1,0 +1,19 @@
+{
+  "name": "p2p-file-transfer",
+  "version": "1.0.0",
+  "description": "Direct peer-to-peer large file transfer without cloud storage",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "webrtc",
+    "p2p",
+    "file-transfer",
+    "large-files"
+  ],
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
